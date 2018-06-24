@@ -3,8 +3,6 @@
 #include <string.h>
 #include "Map.h"
 
-static List *globalMap;
-
 int compString(void *s1, void *s2)
 {
     return strcmp((char *)s1, (char *)s2);
@@ -36,7 +34,7 @@ static City *findCityByName(List *map, char *name)
     return city;
 }
 
-static void linkNeighbors(void *val)
+static void linkNeighbors(List *map, void *val)
 {
     Neighbor *neighbor;
     City *city = (City *)val;
@@ -45,7 +43,7 @@ static void linkNeighbors(void *val)
 
     for (int n = 0; n < city->neighbors->nelts; n++) {
         neighbor = (Neighbor *)curNode->val;
-        neighbor->city = findCityByName(globalMap, neighbor->name);
+        neighbor->city = findCityByName(map, neighbor->name);
         curNode = curNode->next;
     }
 }
@@ -55,6 +53,7 @@ List *buildMap(char *map_file_name)
     List *map;
     City *city;
     Neighbor *neighbor;
+    Node *curNode;
 
     FILE *france_map = fopen(map_file_name, "r");
     char cityName[MAX_CITY_NAME];
@@ -66,8 +65,6 @@ List *buildMap(char *map_file_name)
 
     while ((num = fscanf(france_map, "%s %d %d", cityName, &x, &y)) != EOF) {
         if (num == 3) {
-            printf("City discovered: %s (%d, %d)\n", cityName, x, y);
-
             // New city is found, create a new instance and populate accordingly
             city = (City *)calloc(1, sizeof(City));
             strcpy(city->name, cityName);
@@ -78,8 +75,6 @@ List *buildMap(char *map_file_name)
             // Add this city to the map list
             addList(map, city);
         } else if (num == 2) {
-            printf("\t%s (%d)\n", cityName, x);
-
             // New neighbor is found, create a new instance and populate accordingly
             neighbor = (Neighbor *)calloc(1, sizeof(Neighbor));
             strcpy(neighbor->name, cityName);
@@ -95,14 +90,38 @@ List *buildMap(char *map_file_name)
 
     fclose(france_map);
 
-    forEach(map, linkNeighbors); 
+    // Link all of the neighbors
+    curNode = map->head;
+    while (curNode) {
+        linkNeighbors(map, (Neighbor *)curNode->val);
+        curNode = curNode->next;
+    }
 
     return map;
 }
 
+static void prettyPrintCity(void *val)
+{
+    City *city = (City *)val;
+    Node *curNode = city->neighbors->head;
+    Neighbor *neighbor; 
+
+    printf(" * %s (%d, %d)\n", city->name, city->x, city->y);
+    printf(" ****> ");
+
+    while (curNode) {
+        neighbor = (Neighbor *)curNode->val;
+        printf("[%s @ %d] ", neighbor->name, neighbor->distance);
+        curNode = curNode->next;
+    }
+    printf("\n\n");
+}
+
 int main()
 {
-    globalMap = buildMap("FRANCE.MAP");
+    List *map = buildMap("FRANCE.MAP");
+
+    forEach(map, prettyPrintCity);
 
     return 0;
 }

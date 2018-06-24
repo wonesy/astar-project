@@ -1,0 +1,241 @@
+#include <stdio.h>
+#include "List.h"
+
+/** Creates an empty list */
+List *newList(compFun comp, prFun pr)
+{
+    List *list  = (List *)calloc(1, sizeof(List));
+    list->comp = comp;
+    list->pr = pr;
+
+    return list;
+}
+
+void delList(List *list)
+{
+    Node *cur = list->head;
+    while (cur) {
+        Node *tmp = cur;
+        cur = tmp->next;
+        free(tmp);
+    }
+
+    free(list);
+}
+
+Node *nthNodeInList(List *list, int pos)
+{
+    int curPos = 0;
+    Node *node = list->head;
+
+    if ((pos < 0) || (pos >= list->nelts)) {
+        return NULL;
+    }
+    
+    while (curPos < pos) {
+        node = node->next;
+        curPos++;
+    }
+
+    return node;
+}
+
+status nthInList(List *list, int pos, void **elem)
+{
+    Node *node;
+
+    node = nthNodeInList(list, pos);
+    if (node == NULL) {
+        return ERRINDEX;
+    }
+
+    *elem = node->val;
+
+    return OK;
+}
+
+status addListAt(List *list, int pos, void *elem)
+{
+    Node *node;
+    Node *newNode;
+
+    node = nthNodeInList(list, pos-1);
+    if (node == NULL) {
+        return ERRINDEX;
+    }
+
+    newNode = (Node *)calloc(1, sizeof(Node));
+    if (newNode == NULL) {
+        return ERRALLOC;
+    }
+    node->val = elem;
+
+    newNode->next = node->next;
+    node->next = newNode;
+    
+    list->nelts++;
+    return OK;
+}
+
+status remFromListAt(List *list, int pos, void **elem)
+{
+    Node *prevNode;
+    Node *nodeToDelete;
+
+    prevNode = nthNodeInList(list, pos-1);
+    if (prevNode == NULL) {
+        return ERRINDEX;
+    }
+
+    nodeToDelete = prevNode->next;
+    if (prevNode == NULL) {
+        return ERRINDEX;
+    }
+    *elem = nodeToDelete->val;
+
+    prevNode->next = nodeToDelete->next;
+
+    free(nodeToDelete);
+
+    return OK;
+}
+
+status remFromList(List *list, void *elem)
+{
+    int rc = -1;
+    Node *node = list->head;
+    Node *prevNode = NULL;
+
+    if (list->comp == NULL) {
+        return ERRUNABLE;
+    }
+
+    rc = list->comp(elem, node->val);
+    while ((rc != 0) && (node != NULL)) {
+        prevNode = node;
+        node = node->next;
+        rc = list->comp(elem, node->val);
+    }
+
+    if (rc != 0) {
+        return ERRABSENT;
+    }
+
+    if (prevNode == NULL) {
+        // this means the head is the value
+        list->head = node->next;
+    } else {
+        prevNode->next = node->next;
+    }
+
+    free(node);
+    
+    return OK;
+}
+
+void forEach(List *list, void (*f) (void *))
+{
+    Node *node = list->head;
+    while (node != NULL) {
+        f(node->val);
+        node = node->next;
+    }
+}
+
+int lengthList(List *list) {
+    int length = 0;
+    Node *node = list->head;
+
+    while (node != NULL) {
+        node = node->next;
+        length++;
+    }
+
+    return length;
+}
+
+status addList(List *list, void *elem)
+{
+    Node *newNode;
+    Node *prevNode = NULL;
+    Node *curNode = list->head;
+    int rc;
+
+    if (!list->comp) {
+        return ERRUNABLE;
+    }
+
+    newNode = (Node *)calloc(1, sizeof(Node));
+    if (!newNode) {
+        return ERRALLOC;
+    }
+    newNode->val = elem;
+
+    if (list->head == NULL) {
+        list->head = newNode;
+        return OK;
+    }
+
+    rc = list->comp(curNode->val, elem);
+    while ((rc < 0) && (curNode->next != NULL)) {
+        prevNode = curNode;
+        curNode = curNode->next;
+        rc = list->comp(curNode->val, elem);
+    }
+
+    if (rc >= 0) {
+        prevNode->next = newNode;
+        newNode->next = curNode;
+    } else {
+        newNode->next = curNode->next;
+        curNode->next = newNode;
+    }
+
+    list->nelts++;
+    return OK;
+}
+
+Node *isInList(List *list, void *elem)
+{
+    int rc = -1;
+    Node *node = list->head;
+    Node *prevNode = NULL;
+
+    if (list->comp == NULL) {
+        return NULL;
+    }
+
+    rc = list->comp(elem, node->val);
+    if (rc == 0) {
+        return prevNode;
+    }
+
+
+    while ((rc != 0) && (node->next != NULL)) {
+        prevNode = node;
+        node = node->next;
+        rc = list->comp(elem, node->val);
+    }
+
+    if (rc != 0) {
+        return NULL;
+    }
+
+    return prevNode;
+}
+
+status displayList(List *list)
+{
+    Node *node = list->head;
+
+    if (!list->pr) {
+        return ERRUNABLE;
+    }
+
+    while (node) {
+        list->pr(node->val);
+        node = node->next;
+    }
+
+    return OK;
+}

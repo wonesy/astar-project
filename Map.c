@@ -1,11 +1,23 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 #include "Map.h"
 
-int compString(void *s1, void *s2)
+int compCityString(void *s1, void *s2)
 {
-    return strcmp((char *)s1, (char *)s2);
+    City *city1 = (City *)s1;
+    City *city2 = (City *)s2;
+
+    return strcmp((char *)city1->name, (char *)city2->name);
+}
+
+int compNeighborString(void *s1, void *s2)
+{
+    Neighbor *neighbor1 = (Neighbor *)s1;
+    Neighbor *neighbor2 = (Neighbor *)s2;
+
+    return strcmp((char *)neighbor1->name, (char *)neighbor2->name);
 }
 
 void printString(void *s)
@@ -61,7 +73,7 @@ List *buildMap(char *map_file_name)
     int y;
     int num;
 
-    map = newList(compString, printString);
+    map = newList(compCityString, compCityString, printString);
 
     while ((num = fscanf(france_map, "%s %d %d", cityName, &x, &y)) != EOF) {
         if (num == 3) {
@@ -70,7 +82,9 @@ List *buildMap(char *map_file_name)
             strcpy(city->name, cityName);
             city->x = x;
             city->y = y;
-            city->neighbors = newList(compString, printString);
+            city->distance_from_start = MAX_DISTANCE;
+            city->distance_to_end = MAX_DISTANCE;
+            city->neighbors = newList(compNeighborString, compNeighborString, printString);
 
             // Add this city to the map list
             addList(map, city);

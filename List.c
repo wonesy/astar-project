@@ -21,14 +21,15 @@
 static Node* available = 0;
 
 /* create a new, empty list */
-List * newList (compFun comp, prFun pr) {
+List * newList (compFun sort, compFun comp, prFun pr) {
     List * l;
     l = (List*) malloc(sizeof(List));
     if (! l) return 0;
     l->nelts	= 0;
     l->head	= 0;
-    l->comp 	= comp;
-    l->pr     = pr;
+    l->sort = sort;
+    l->comp	= comp;
+    l->pr   = pr;
     return l;
 }
 
@@ -207,16 +208,16 @@ static Node* previous(List* l, void* e) {
 status addList (List* l, void* e) {
     Node * prec = l->head, *toAdd;
     
-    if (l->comp == 0) return ERRUNABLE;
+    if (l->sort == 0) return ERRUNABLE;
 
     /* add to the head if list is empty, if no comparison function is given
      * or if e < head element
      */
-    if (l->nelts == 0 || (l->comp)(e,l->head->val)<0)
+    if (l->nelts == 0 || (l->sort)(e,l->head->val)<0)
       return addListAt(l,1,e);
 
     /* otherwise, get predecessor and link new element just after it */
-    while (prec && prec->next && (l->comp)(prec->next->val,e)<0)
+    while (prec && prec->next && (l->sort)(prec->next->val,e)<0)
 	    prec = prec->next;
 
     toAdd = available;

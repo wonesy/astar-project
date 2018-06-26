@@ -30,27 +30,29 @@ typedef struct Node {
  * Must follow the "strcmp" convention: result is negative if e1 is less
  * than e2, null if they are equal, and positive otherwise.
  */
-typedef int (*compFun)   (void* e1, void* e2); 
+typedef int (*compFun)   (void* e1, void* e2);
 
 /** Display function for list elements */
-typedef void(*prFun)   (void*);    
+typedef void(*prFun)   (void*);
 
 /** The list embeds a counter for its size and the two function pointers */
 typedef struct List {
   int nelts;
   Node * head;
-  compFun comp;    
+  compFun sort;
+  compFun comp;
   prFun pr;
 } List;
 
 
 /** Empty List creation by dynamic memory allocation (O(1)).
- * @param comp comparison function between elements (ala strcmp())
+ * @param comp comparison function between elements (ala strcmp()) to sort by
+ * @param comp comparison function between elements (ala strcmp()) to identify by
  * @param pr display function for list elements
  * @return a new (empty) list if memory allocation OK
  * @return 0 otherwise
  */
-List*    newList	(compFun,prFun);	
+List*    newList	(compFun,compFun,prFun);
 
 /** destroy the list by deallocating used memory (O(N)).
  * @param l the list to destroy */

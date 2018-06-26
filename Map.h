@@ -4,14 +4,15 @@
 #include "List.h"
 
 #define MAX_CITY_NAME 128
+#define MAX_DISTANCE 10000
 
 typedef struct city {
     char name[MAX_CITY_NAME];
     int x;
     int y;
-    List *neighbors;
-    int distance_from_start;
-    int distance_to_end;
+    List *neighbors;            // succ
+    int distance_from_start;    // g
+    int distance_to_end;        // h
 } City;
 
 typedef struct neighbor {

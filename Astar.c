@@ -35,12 +35,12 @@ static int calculateHScore(City *current, City *goal)
     if (b == 0) b++;
 
     double c = sqrt((double)((a*a) + (b*b)));
-    
+
     // return half of the beeline distance to the goal, just from observing the map
     return (int)(c/2);
 }
 
-void aStar(City *start, City *goal)
+int aStar(City *start, City *goal)
 {
     List *open;
     List *closed;
@@ -50,48 +50,114 @@ void aStar(City *start, City *goal)
     City *city;
     Neighbor *neighbor;
 
+    int tmpDistance;
+
     open = newList(compareFScore, compareName, printFScore);
     closed = newList(compareFScore, compareName, printFScore);
 
     start->distance_from_start = 0;
     start->distance_to_end = calculateHScore(start, goal);
-    
+
     addList(open, start);
 
     // Loop while there is still something in the open list
     while (open->head) {
         currentCityNode = open->head;   // head will always be the lowest F score
         city = (City *)currentCityNode->val;
-        printFScore(city);
 
         // Check to see if we're at the goal already
-        if (city->name == goal->name) {
-            // we've reached the goal and can end
-            // TODO XXX
-            return;
+        if (strcmp(city->name, goal->name) == 0) {
+            printFoundPath(goal);
+            return 0;
         }
 
         // Move current city from open to closed
-        remFromListAt(open, 0, (void **)&city);
+        remFromList(open, city);
         addList(closed, city);
 
+        // Loop through each neighbor in the city
         currentNeighborNode = city->neighbors->head;
         while (currentNeighborNode) {
             neighbor = (Neighbor *)currentNeighborNode->val;
 
             // Skip this neighbor if it's already in the closed list
             if (isInList(closed, neighbor->city)) {
+                currentNeighborNode = currentNeighborNode->next;
                 continue;
             }
+
+            // Update the "G" score aka distance from start
+            tmpDistance = city->distance_from_start + neighbor->distance;
+
+            if (tmpDistance >= neighbor->city->distance_from_start) {
+                addList(closed, neighbor->city);
+                currentNeighborNode = currentNeighborNode->next;
+                continue;   // this neighbor will not provide a faster path
+            }
+
+            // if we're here, this neighbor is a candidate
+            neighbor->city->cameFrom = city;
+            neighbor->city->distance_from_start = tmpDistance;
+            neighbor->city->distance_to_end = calculateHScore(neighbor->city, goal);
 
             // Add the neighbor city to the open list, if not already there
             if (!isInList(open, neighbor->city)) {
                 addList(open, neighbor->city);
             }
 
-            currentNeighborNode = currentNeighborNode->next; 
+            currentNeighborNode = currentNeighborNode->next;
         }
-
     }
+
+    return 1;
 }
 
+void printFoundPath(City *goal)
+{
+    City *walk = goal;
+
+    printf("[GOAL] --> ");
+    while (walk) {
+        printf("%d %s --> ", walk->distance_from_start, walk->name);
+        walk = walk->cameFrom;
+    }
+    printf("[START]\n");
+}
+
+static char usage[256] = "Please enter two city names: e.g. map Paris Lyon. See --help";
+
+int main(int argc, char **argv)
+{
+    List *map;
+    City *start;
+    City *goal;
+    int rc;
+
+    map = buildMap("FRANCE.MAP");
+
+    if (argc == 2 && (strcmp(argv[1], "--help") == 0)) {
+        printf("%s\n", usage);
+        printf("Possible city names are:\n");
+        Node *cityNode = (Node *)map->head;
+        while (cityNode) {
+            printf("\t%s\n", ((City *)cityNode->val)->name);
+            cityNode = cityNode->next;
+        }
+        return 0;
+    } else if (argc < 3) {
+        printf("%s\n", usage);
+        return -1;
+    }
+
+    start = findCityByName(map, argv[1]);
+    goal = findCityByName(map, argv[2]);
+
+    if  (!start || !goal) {
+        printf("Not acceptable city names, see --help for options\n");
+        return -2;
+    }
+
+    rc = aStar(start, goal);
+
+    return rc;
+}

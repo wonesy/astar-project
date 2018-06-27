@@ -6,7 +6,9 @@
 #include <string.h>
 #include <math.h>
 
-void aStar(City *start, City *goal);
+int aStar(City *start, City *goal);
+
+void printFoundPath(City *goal);
 
 void displayPath(City *from, City *current);
 

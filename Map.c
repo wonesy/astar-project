@@ -25,7 +25,7 @@ void printString(void *s)
     printf("%s", (char *)s);
 }
 
-static City *findCityByName(List *map, char *name)
+City *findCityByName(List *map, char *name)
 {
     City *city = 0;
     Node *curNode = map->head;
@@ -114,7 +114,7 @@ List *buildMap(char *map_file_name)
     return map;
 }
 
-static void prettyPrintCity(void *val)
+void prettyPrintCity(void *val)
 {
     City *city = (City *)val;
     Node *curNode = city->neighbors->head;
@@ -129,13 +129,4 @@ static void prettyPrintCity(void *val)
         curNode = curNode->next;
     }
     printf("\n\n");
-}
-
-int main()
-{
-    List *map = buildMap("FRANCE.MAP");
-
-    forEach(map, prettyPrintCity);
-
-    return 0;
 }

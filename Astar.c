@@ -112,16 +112,33 @@ int aStar(City *start, City *goal)
     return 1;
 }
 
+static int compareDistanceFromStart(void *a, void *b)
+{
+    City *cityA = (City *)a;
+    City *cityB = (City *)b;
+
+    return cityA->distance_from_start - cityB->distance_from_start;
+}
+
 void printFoundPath(City *goal)
 {
     City *walk = goal;
+    Node *walkNode;
 
-    printf("[GOAL] --> ");
+    List *path = newList(compareDistanceFromStart, compareName, printFScore);
+
     while (walk) {
-        printf("%d %s --> ", walk->distance_from_start, walk->name);
+        addList(path, walk);
         walk = walk->cameFrom;
     }
-    printf("[START]\n");
+
+    walkNode = path->head;
+
+    while (walkNode) {
+        walk = (City *)walkNode->val;
+        printf("%s [%d]\n", walk->name, walk->distance_from_start);
+        walkNode = walkNode->next;
+    }
 }
 
 static char usage[256] = "Please enter two city names: e.g. map Paris Lyon. See --help";

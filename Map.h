@@ -13,6 +13,7 @@ typedef struct city {
     List *neighbors;            // succ
     int distance_from_start;    // g
     int distance_to_end;        // h
+    struct city *cameFrom;
 } City;
 
 typedef struct neighbor {
@@ -20,5 +21,11 @@ typedef struct neighbor {
     char name[MAX_CITY_NAME];
     int distance;
 } Neighbor;
+
+List *buildMap(char *map_file_name);
+
+void prettyPrintCity(void *val);
+
+City *findCityByName(List *map, char *name);
 
 #endif //__MAP_H

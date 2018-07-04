@@ -34,10 +34,9 @@ static int calculateHScore(City *current, City *goal)
     if (a == 0) a++;
     if (b == 0) b++;
 
-    double c = sqrt((double)((a*a) + (b*b)));
-
-    // return half of the beeline distance to the goal, just from observing the map
-    return (int)(c/2);
+    // return the estimated difference between (x,y) of goal and curren
+    // weigh it by 0.25 to ensure the alogorithm isn't too greedy
+    return (a+b)/4;
 }
 
 int aStar(City *start, City *goal)
